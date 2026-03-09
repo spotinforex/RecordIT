@@ -6,6 +6,7 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 load_dotenv()
+
 api_key = os.getenv("ai_api_key")
 
 def read_system_instructions(file_path):
@@ -61,4 +62,5 @@ def generate_response(prompt):
     except requests.exceptions.RequestException as e:
         logging.error(f"API request failed: {e}")
         return None
+
 

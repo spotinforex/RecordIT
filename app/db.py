@@ -18,12 +18,15 @@ class DatabaseConnection:
     def __init__(self):
         '''Initialize the database connection'''
         try:
+            self.connection = None
+            self.cursor = None
             self.connection = psycopg2.connect(
                 user=USER,
                 password=PASSWORD,
                 host=HOST,
                 port=PORT,
-                dbname=DBNAME
+                dbname=DBNAME,
+                sslmode="require"
             )
             logging.info("Connection successful!")
             self.cursor = self.connection.cursor()
