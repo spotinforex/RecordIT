@@ -36,7 +36,7 @@ def generate_response(prompt):
         "x-goog-api-key": api_key,
         "Content-Type": "application/json"
     }
-    system_prompt = read_system_instructions("app/system_instructions/system_prompt.txt") or ""
+    system_prompt = read_system_instructions("app/system_instructions/system_prompt.txt")
     full_prompt = f"{system_prompt}\n\nUser: {prompt}"
 
     data = {
@@ -63,4 +63,7 @@ def generate_response(prompt):
         logging.error(f"API request failed: {e}")
         return None
 
-
+if __name__ == "__main__":
+    prompt = "What is the capital of France"
+    response = generate_response(prompt)
+    print(f"Prompt: {prompt}\nResponse: {response}")
