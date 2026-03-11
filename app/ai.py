@@ -1,8 +1,9 @@
 import requests
-import logging, os
+import logging, os, json, re
 from dotenv import load_dotenv
 from pathlib import Path
 from session import save_chat, get_chat_history
+from utils import retry
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -25,6 +26,7 @@ def read_system_instructions(file_path):
         logging.error(f"Error reading system instructions from {file_path}: {e}")
         return None
 
+@retry(max_attempts=3, delay=2.0, backoff=2.0, exceptions=(requests.exceptions.RequestException,))
 def generate_response(session_id, prompt):
     '''Generate a response from the Gemini API based on a user prompt
     Args:
@@ -42,7 +44,8 @@ def generate_response(session_id, prompt):
     history = get_chat_history(session_id)
     if history:
         full_prompt = f"{system_prompt}\n\nConversation History: {history}\n\nUser: {prompt}"
-    full_prompt = f"{system_prompt}\n\nUser: {prompt}"
+    else:
+        full_prompt = f"{system_prompt}\n\nUser: {prompt}"
 
     data = {
         "contents": [
@@ -62,14 +65,22 @@ def generate_response(session_id, prompt):
 
         parts = candidates[0].get("content", {}).get("parts", [])
         response_text = " ".join(part.get("text", "") for part in parts)
-        return response_text.strip() if response_text else None
-
+        ai_response = response_text.strip() if response_text else None
+        if ai_response:
+            match = re.search(r'```json\s*(\{.*?\})\s*```', ai_response, re.DOTALL)
+            if match:
+                json_str = match.group(1)
+                parsed = json.loads(json_str)
+                question = parsed.get("Question")
+                complete_info = parsed.get("CompleteInfo")
+                if question:
+                    conversation = f"User: {prompt}\n\nAI: {question}"
+                    status = save_chat(session_id, conversation)
+                
+                return parsed
+        return None
     except requests.exceptions.RequestException as e:
         logging.error(f"API request failed: {e}")
         return None
 
-if __name__ == "__main__":
-    prompt = ["I have not recieved my payment", "yp/c4/3939", "my name is samuel daniel", "november 2025 and december 2025"]
-    for i in prompt:
-        response = generate_response("abc",i)
-        print(f"Prompt: {i}\nResponse: {response}")
+

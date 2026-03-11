@@ -1,30 +1,37 @@
-import logging, os
+import logging, os, asyncio
 from data_processing import complaint_processor, whatsapp_logger
 from ai import generate_response
 from message_handler import send_message
 
-logging.basicConfig(level = logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def message_pipeline(data):
+async def message_pipeline(data):
     '''
     Pipeline processor for incoming messages
     Args:
-        data: incoming message in json  format
+        data: incoming message in json format
     '''
     try:
-        sender, message, timestamp  = complaint_processor(data)
+        result = complaint_processor(data)
+        if not result:
+            logging.warning("complaint_processor returned None. Skipping pipeline.")
+            return
 
-        ai_response = generate_response(json_data)
+        sender, message, timestamp = result
+
+        ai_response = generate_response(sender, message)
+        if not ai_response:
+            logging.warning(f"No AI response generated for sender: {sender}")
+            return
 
         if ai_response.get("CompleteInfo") == True:
-            status = whatsapp_logger(sender, timestamp, ai_response)
-            if status is False:
-                logging.info("Failed to upload complaint to the database")
-                
-        if ai_response.get("CompleteInfo") == False:
-            status = send_message(to, ai_response)
-            logging.info(f"Message Sent to {to}")
-            
+            status = await asyncio.to_thread(whatsapp_logger, ai_response)
+            logging.info(f"Complaint logged for {sender}. Status: {status}")
+
+        elif ai_response.get("CompleteInfo") == False:
+            status = await send_message(sender, ai_response.get("Question"))
+
     except Exception as e:
         logging.error(f"An Error In the Message Pipeline. Error: {e}")
-        
+
+

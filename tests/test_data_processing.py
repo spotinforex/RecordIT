@@ -3,3 +3,7 @@ if __name__ == "__main__":
     
     result = complaint_processor(data)
     print(result)
+
+if __name__ == "__main__":
+    status = whatsapp_logger(243667, {'ComplainantCode': 'yp/c4/3939', 'Cohort': '4', 'TypeOfComplainant': 'YP', 'ComplainantName': 'Samuel Daniel', 'ComplaintCategory': 'Payment', 'ComplainantFeedback': 'The complainant reported not receiving payment for November and December 2025.', 'CompleteInfo': True})
+    print(status)

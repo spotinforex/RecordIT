@@ -1,3 +1,3 @@
-# Session config
-SESSION_TIMEOUT = 60  # seconds
+
+SESSION_TIMEOUT = 60  
 END_KEYWORD = "END"
