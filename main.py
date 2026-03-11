@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.debouncer_pipeline import debounce_pipeline
-from app.data_processing import complaint_processor
-from app.session import set_human_mode, is_human_mode, clear_human_mode
+from logic.debouncer_pipeline import debounce_pipeline
+from logic.data_processing import complaint_processor
+from logic.session import set_human_mode, is_human_mode, clear_human_mode
 import logging, os, re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

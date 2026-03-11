@@ -1,8 +1,7 @@
-import pandas as pd
-from db import DatabaseConnection
+from logic.db import DatabaseConnection
 import logging, re
 from datetime import datetime
-from utils import retry
+from utils.retry import retry
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

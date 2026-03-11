@@ -1,7 +1,7 @@
 import logging, time, os, json
 from dotenv import load_dotenv
 import redis
-from utils import retry
+from utils.retry import retry
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 load_dotenv()

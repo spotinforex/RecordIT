@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from session import redis_connection
-from connector import message_pipeline
+from logic.session import redis_connection
+from logic.connector import message_pipeline
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 

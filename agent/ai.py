@@ -2,8 +2,8 @@ import requests
 import logging, os, json, re
 from dotenv import load_dotenv
 from pathlib import Path
-from session import save_chat, get_chat_history
-from utils import retry
+from logic.session import save_chat, get_chat_history
+from utils.retry import retry
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -40,7 +40,7 @@ def generate_response(session_id, prompt):
         "x-goog-api-key": api_key,
         "Content-Type": "application/json"
     }
-    system_prompt = read_system_instructions("app/system_instructions/system_prompt.txt")
+    system_prompt = read_system_instructions("agent/system_instructions/system_prompt.txt")
     history = get_chat_history(session_id)
     if history:
         full_prompt = f"{system_prompt}\n\nConversation History: {history}\n\nUser: {prompt}"

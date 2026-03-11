@@ -1,7 +1,7 @@
 import httpx
 from dotenv import load_dotenv
 import os, logging
-from utils import retry
+from utils.retry import retry
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

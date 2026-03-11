@@ -1,7 +1,7 @@
 import logging, os, asyncio
-from data_processing import complaint_processor, whatsapp_logger
-from ai import generate_response
-from message_handler import send_message
+from logic.data_processing import complaint_processor, whatsapp_logger
+from agent.ai import generate_response
+from logic.message_handler import send_message
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
