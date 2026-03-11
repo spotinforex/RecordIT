@@ -1,28 +1,40 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Security
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from logic.debouncer_pipeline import debounce_pipeline
 from logic.data_processing import complaint_processor
 from logic.session import set_human_mode, is_human_mode, clear_human_mode
-import logging, os, re
+import logging, os, re, asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-YOUR_NUMBER = os.getenv("YOUR_INSTANCE_WID")  # Whatsapp line
+YOUR_NUMBER = os.getenv("YOUR_INSTANCE_WID")  # Whatsapp Number
+WEBHOOK_TOKEN = os.getenv("WEBHOOK_TOKEN")  
 
 app = FastAPI()
+bearer_scheme = HTTPBearer(auto_error=False)
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
+    '''
+    Green API sends: Authorization: Bearer <token>
+    or              Authorization: Basic <token>
+    HTTPBearer extracts the token from either automatically.
+    '''
+    if not credentials or credentials.credentials != WEBHOOK_TOKEN:
+        logger.warning("Unauthorized webhook request — invalid or missing token.")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return credentials
 
 @app.post("/webhook")
-async def webhook(request: Request):
+async def webhook(request: Request, credentials: HTTPAuthorizationCredentials = Security(verify_token)):
     try:
         data = await request.json()
         logger.info(f"Incoming webhook: {data}")
         type_webhook = data.get("typeWebhook")
 
-        # Detect human agent replying outbound
         if type_webhook == "outgoingMessageReceived":
             sender_wid = data.get("senderData", {}).get("sender", "")
             chat_id = data.get("senderData", {}).get("chatId", "")
@@ -43,22 +55,23 @@ async def webhook(request: Request):
 
         sender, message, timestamp = result
 
-        # Suppress AI if human has taken over
         if is_human_mode(str(sender)):
             logger.info(f"Human mode active for {sender} — AI suppressed.")
             return JSONResponse({"status": "human_mode"})
 
-        # don't await the debounce task, return immediately
         asyncio.create_task(debounce_pipeline(str(sender), message, data))
-
         return JSONResponse({"status": "ok"})
 
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return JSONResponse({"status": "error", "detail": str(e)}, status_code=500)
 
-
 @app.get("/")
 async def health_check():
     return {"status": "running", "service": "NGO Complaints Webhook"}
 
+@app.post("/handback/{sender}")
+async def handback(sender: str, credentials: HTTPAuthorizationCredentials = Security(verify_token)):
+    clear_human_mode(sender)
+    logger.info(f"AI restored for {sender}")
+    return JSONResponse({"status": "ai_restored", "sender": sender})
