@@ -45,7 +45,7 @@ def complaint_processor(payload):
         return None
 
 @retry(max_attempts=3, delay=1.0, backoff=2.0, exceptions=(Exception,))
-def whatsapp_logger(sender,data):
+def whatsapp_logger(data):
     '''
     Logs Whatsapp Complaints to the database
     Args:
@@ -69,14 +69,14 @@ def whatsapp_logger(sender,data):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
         values = (
-            data.get("ComplainantCode"),
+            data.get("ComplainantCode").upper(),
             data.get("Cohort"),
             data.get("TypeOfComplainant"),
             data.get("ComplainantName"),
             data.get("ComplaintCategory"),
             "WhatsApp",                         # hardcoded since this is the whatsapp logger
             data.get("ComplainantFeedback"),
-            sender
+            data.get("Phone Number")
         )
         status = db.execute_query(query, values)
         if status is False:

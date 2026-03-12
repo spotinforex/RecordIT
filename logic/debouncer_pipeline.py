@@ -1,11 +1,12 @@
 import asyncio
 import logging
+import copy
 from logic.session import redis_connection
 from logic.connector import message_pipeline
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-DEBOUNCE_SECONDS = 10
+DEBOUNCE_SECONDS = 60 # waits one minute (60 seconds)
 BUFFER_KEY = "debounce:buffer:{}"
 TASK_REGISTRY = {}
 
@@ -51,8 +52,6 @@ async def _flush_after_delay(sender: str, data: dict, redis_client, buffer_key: 
         redis_client.delete(buffer_key)
         TASK_REGISTRY.pop(sender, None)
 
-        # ✅ Fixed: deepcopy data to avoid mutating the original webhook payload
-        import copy
         flushed_data = copy.deepcopy(data)
         flushed_data["messageData"]["textMessageData"]["textMessage"] = merged_message
         await message_pipeline(flushed_data)
@@ -62,5 +61,5 @@ async def _flush_after_delay(sender: str, data: dict, redis_client, buffer_key: 
         pass
     except Exception as e:
         logging.error(f"Error flushing debounce buffer for {sender}: {e}")
-        # ✅ Clean up registry on unexpected failure so sender isn't stuck
+        # Clean up registry on unexpected failure so sender isn't stuck
         TASK_REGISTRY.pop(sender, None)

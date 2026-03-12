@@ -89,3 +89,15 @@ def clear_human_mode(sender: str):
         raise ConnectionError("Failed to get Redis connection.")
     redis_client.delete(f"human_mode:{sender}")
     logging.info(f"Human mode cleared for {sender}")
+
+def is_duplicate(id_message: str) -> bool:
+    try:
+        redis_client = redis_connection()
+        if not redis_client:
+            return False
+        key = f"seen:{id_message}"
+        is_new = redis_client.set(key, 1, ex=1800, nx=True)
+        return not is_new
+    except Exception as e:
+        logger.error(f"Duplicate check failed: {e}")
+        return False

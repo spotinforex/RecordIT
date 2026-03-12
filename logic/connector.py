@@ -25,8 +25,10 @@ async def message_pipeline(data):
             return
 
         if ai_response.get("CompleteInfo") == True:
+            ai_response["Phone Number"] = sender
             status = await asyncio.to_thread(whatsapp_logger, ai_response)
             logging.info(f"Complaint logged for {sender}. Status: {status}")
+            feedback = await send_message(sender, "Your complaint has been recorded and we will process it soon, Please be patient")
 
         elif ai_response.get("CompleteInfo") == False:
             status = await send_message(sender, ai_response.get("Question"))

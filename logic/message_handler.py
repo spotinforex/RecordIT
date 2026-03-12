@@ -20,12 +20,11 @@ async def send_message(to: str, text: str):
             "chatId": f"{to}@c.us",
             "message": text
         }
-        # ✅ Fixed: async with + await on the post call
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=payload)
 
         logging.info(f"Green API status: {response.status_code}")
-        logging.info(f"Green API response: {response.text}")
         
         response.raise_for_status()
         return response.json()
