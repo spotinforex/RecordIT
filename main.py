@@ -8,6 +8,7 @@ from db_retrieval.complaint_retrieval import single_complaint_retriever, multipl
 import logging, os, re, asyncio
 from dotenv import load_dotenv
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -18,6 +19,14 @@ WEBHOOK_TOKEN = os.getenv("WEBHOOK_TOKEN")
 
 app = FastAPI()
 bearer_scheme = HTTPBearer(auto_error=False)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class ConnectionManager:
     def __init__(self):
@@ -112,11 +121,11 @@ async def get_complaints(
     try:
         complaints = multiple_complaint_retriever(period)
         if complaints is None:
-            # ✅ Fixed: period_map is now PERIOD_MAP imported from data_processing
             return JSONResponse(
                 {"error": f"Invalid period. Choose from: {list(PERIOD_MAP.keys())}"},
                 status_code=400
             )
+        
         return JSONResponse({
             "complaints": complaints,
             "count": len(complaints),
@@ -171,7 +180,10 @@ async def webhook(request: Request, credentials: HTTPAuthorizationCredentials = 
             logger.info(f"Human mode active for {sender} — AI suppressed.")
             return JSONResponse({"status": "human_mode"}, status_code=200)
 
-        asyncio.create_task(debounce_pipeline(str(sender), message, data))
+        task = asyncio.create_task(debounce_pipeline(str(sender), message, data))
+        task.add_done_callback(
+            lambda t: logger.error(f"debounce_pipeline failed: {t.exception()}") if t.exception() else None
+        )
         return JSONResponse({"status": "ok"}, status_code=200)
 
     except Exception as e:

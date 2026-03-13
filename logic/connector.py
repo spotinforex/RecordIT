@@ -30,8 +30,11 @@ async def message_pipeline(data):
             logging.info(f"Complaint logged for {sender}. Status: {status}")
             feedback = await send_message(sender, "Your complaint has been recorded and we will process it soon, Please be patient")
 
-        elif ai_response.get("CompleteInfo") == False:
+        elif ai_response.get("CompleteInfo") == False :
+            logging.info("Sending message for more information")
             status = await send_message(sender, ai_response.get("Question"))
+        else:
+            logging.info(f"{ai_response.get("CompleteInfo")}")
 
     except Exception as e:
         logging.error(f"An Error In the Message Pipeline. Error: {e}")

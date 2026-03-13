@@ -22,7 +22,7 @@ def single_complaint_retriever(complaint_id):
         db = DatabaseConnection()
         logging.info(f"Fetching complaint data for complainant {complaint_id}")
         complaint_id = complaint_id.upper()
-        results = db.fetch_all('SELECT * FROM public.complaint WHERE id = %s', (complaint_id,))
+        results = db.fetch_all('SELECT * FROM public.complaint WHERE "Complainant Code" = %s', (complaint_id,))
         db.close()
         if not results:
             logging.info(f"No records found for complainant id: {complaint_id}")
@@ -31,6 +31,8 @@ def single_complaint_retriever(complaint_id):
                    "complainant_name", "phone_number", "complaint_category",
                    "communication_channel", "complainant_feedback"]
         complaint = dict(zip(columns, results[0]))
+        if complaint.get("id"):
+            complaint["id"] = str(complaint["id"])  
         if complaint.get("date"):
             complaint["date"] = str(complaint["date"])
         return complaint
@@ -69,6 +71,8 @@ def multiple_complaint_retriever(period=None):
 
         complaints = [dict(zip(columns, row)) for row in results]
         for c in complaints:
+            if c.get("id"):
+                c["id"] = str(c["id"])  
             if c.get("date"):
                 c["date"] = str(c["date"])
         return complaints
@@ -155,3 +159,5 @@ def complaints_to_excel(period=None):
     except Exception as e:
         logging.error(f"Error generating complaints Excel: {e}")
         raise
+
+
