@@ -9,7 +9,7 @@ load_dotenv()
 USER = os.getenv("user")
 PASSWORD = os.getenv("password")
 HOST = os.getenv("host")
-PORT = os.getenv("port")
+PORT = os.getenv("db_port")
 DBNAME = os.getenv("dbname")
 
 _missing = [k for k, v in {"user": USER, "password": PASSWORD, "host": HOST, "port": PORT, "dbname": DBNAME}.items() if not v]

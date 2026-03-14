@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request, HTTPException, Security, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, HTTPException, Security, WebSocketDisconnect, WebSocket
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from logic.debouncer_pipeline import debounce_pipeline
 from logic.data_processing import complaint_processor
 from logic.session import set_human_mode, is_human_mode, clear_human_mode, is_duplicate
+from logic.websocket import manager
 from db_retrieval.complaint_retrieval import single_complaint_retriever, multiple_complaint_retriever, PERIOD_MAP, complaints_to_excel
 import logging, os, re, asyncio
 from dotenv import load_dotenv
@@ -27,32 +28,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        logger.info(f"WebSocket client connected. Total: {len(self.active_connections)}")
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-        logger.info(f"WebSocket client disconnected. Total: {len(self.active_connections)}")
-
-    async def broadcast(self, message: dict):
-        disconnected = []
-        for connection in self.active_connections:
-            try:
-                await connection.send_json(message)
-            except Exception:
-                disconnected.append(connection)
-        # clean up dead connections
-        for conn in disconnected:
-            self.active_connections.remove(conn)
-
-manager = ConnectionManager()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Security(bearer_scheme)):
     '''
@@ -192,7 +167,7 @@ async def webhook(request: Request, credentials: HTTPAuthorizationCredentials = 
 
 @app.get("/")
 async def health_check():
-    return {"status": "running", "service": "NGO Complaints Webhook"}
+    return JSONResponse({"status": "running", "service": "NGO Complaints Webhook"}, status_code = 200)
 
 @app.post("/handback/{sender}")
 async def handback(sender: str, credentials: HTTPAuthorizationCredentials = Security(verify_token)):

@@ -10,7 +10,7 @@ load_dotenv()
 
 api_key = os.getenv("OPENROUTER_API_KEY")
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def read_system_instructions(file_path: str) -> str | None:
     """Read system instructions from a text file.
@@ -57,9 +57,6 @@ def extract_json(raw: str) -> dict | None:
     except json.JSONDecodeError as e:
         logging.error(f"Failed to parse JSON after cleaning: {e}\nCleaned text: {text}")
         return None
-
-
-# ─── Main function ────────────────────────────────────────────────────────────
 
 @retry(max_attempts=3, delay=2.0, backoff=2.0, exceptions=(requests.exceptions.RequestException,))
 def generate_response(session_id: str, prompt: str) -> dict | None:

@@ -1,5 +1,6 @@
 .env
-*.txt
+schema.txt
+body.txt
 __pycache__/
 *.pyc
 *.pyo

@@ -2,6 +2,7 @@ import logging, os, asyncio
 from logic.data_processing import complaint_processor, whatsapp_logger
 from agent.ai import generate_response
 from logic.message_handler import send_message
+from logic.websocket import manager
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -29,7 +30,11 @@ async def message_pipeline(data):
             status = await asyncio.to_thread(whatsapp_logger, ai_response)
             logging.info(f"Complaint logged for {sender}. Status: {status}")
             feedback = await send_message(sender, "Your complaint has been recorded and we will process it soon, Please be patient")
-
+            await manager.broadcast({
+            "event": "complaint saved",
+            "sender": str(sender)
+            })
+            
         elif ai_response.get("CompleteInfo") == False :
             logging.info("Sending message for more information")
             status = await send_message(sender, ai_response.get("Question"))

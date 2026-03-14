@@ -99,11 +99,10 @@ def complaints_to_excel(period=None):
         ws = wb.active
         ws.title = "Complaints"
 
-        #  Header styling
+        # Header styling
         headers = ["ID", "Date", "Complainant Code", "Cohort", "Type",
                    "Name", "Phone Number", "Category",
                    "Channel", "Feedback"]
-
         header_fill = PatternFill("solid", start_color="1F4E79")
         header_font = Font(bold=True, color="FFFFFF", name="Arial", size=11)
 
@@ -112,7 +111,6 @@ def complaints_to_excel(period=None):
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = Alignment(horizontal="center", vertical="center")
-
         ws.row_dimensions[1].height = 20
 
         # Data rows
@@ -130,17 +128,28 @@ def complaints_to_excel(period=None):
                 complaint.get("communication_channel"),
                 complaint.get("complainant_feedback"),
             ]
+
             for col_idx, value in enumerate(values, start=1):
+                # Uppercase complainant code
+                if col_idx == 3 and isinstance(value, str):
+                    value = value.upper()
+
+                # Phone number as plain text
+                if col_idx == 7 and value is not None:
+                    value = str(value)
+                    cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                    cell.number_format = '@'
+                    cell.font = row_font
+                    cell.alignment = Alignment(horizontal="left", vertical="center")
+                    if row_idx % 2 == 0:
+                        cell.fill = PatternFill("solid", start_color="D9E1F2")
+                    continue
+
                 cell = ws.cell(row=row_idx, column=col_idx, value=value)
                 cell.font = row_font
-                # Alternate row shading
+                cell.alignment = Alignment(horizontal="left", vertical="center")
                 if row_idx % 2 == 0:
                     cell.fill = PatternFill("solid", start_color="D9E1F2")
-
-        # Summary row at the bottom
-        summary_row = len(complaints) + 3
-        ws.cell(row=summary_row, column=1, value="Total Complaints").font = Font(bold=True, name="Arial")
-        ws.cell(row=summary_row, column=2, value=f'=COUNTA(B2:B{len(complaints) + 1})').font = Font(bold=True, name="Arial")
 
         # Auto column widths
         col_widths = [6, 22, 18, 8, 10, 20, 15, 18, 12, 50]
@@ -150,7 +159,7 @@ def complaints_to_excel(period=None):
         # Freeze header row
         ws.freeze_panes = "A2"
 
-        # Save to bytes buffer 
+        # Save to bytes buffer
         buffer = io.BytesIO()
         wb.save(buffer)
         buffer.seek(0)
@@ -159,5 +168,3 @@ def complaints_to_excel(period=None):
     except Exception as e:
         logging.error(f"Error generating complaints Excel: {e}")
         raise
-
-

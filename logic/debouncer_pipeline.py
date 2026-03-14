@@ -24,7 +24,7 @@ async def debounce_pipeline(sender: str, message: str, data: dict):
 
     buffer_key = BUFFER_KEY.format(sender)
     redis_client.rpush(buffer_key, message)
-    redis_client.expire(buffer_key, DEBOUNCE_SECONDS + 5)
+    redis_client.expire(buffer_key, DEBOUNCE_SECONDS + 60)
 
     if sender in TASK_REGISTRY:
         TASK_REGISTRY[sender].cancel()
