@@ -1,5 +1,8 @@
 from fastapi import WebSocket
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
