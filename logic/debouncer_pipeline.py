@@ -6,7 +6,7 @@ from logic.connector import message_pipeline
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-DEBOUNCE_SECONDS = 60 # waits one minute (60 seconds)
+DEBOUNCE_SECONDS = 20 # waits 20 seconds 
 BUFFER_KEY = "debounce:buffer:{}"
 TASK_REGISTRY = {}
 
@@ -24,7 +24,7 @@ async def debounce_pipeline(sender: str, message: str, data: dict):
 
     buffer_key = BUFFER_KEY.format(sender)
     redis_client.rpush(buffer_key, message)
-    redis_client.expire(buffer_key, DEBOUNCE_SECONDS + 60)
+    redis_client.expire(buffer_key, DEBOUNCE_SECONDS + 20)
 
     if sender in TASK_REGISTRY:
         TASK_REGISTRY[sender].cancel()
